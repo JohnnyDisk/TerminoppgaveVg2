@@ -7,11 +7,17 @@
 <body>
     <h1>Your Shopping Cart</h1>
     <ul>
-        {% for item in cart_items %}
-            <li>{{ item.name }} - ${{ item.price }}</li>
-        {% endfor %}
+        {% if cart_items %}
+            {% for product, quantity in cart_items %}
+                <li>{{ product.name }} - Quantity: {{ quantity }} 
+                    <a href="{{ url_for('remove_from_cart', product_id=product.id) }}">Remove</a>
+                </li>
+            {% endfor %}
+        {% else %}
+            <li>Your cart is currently empty.</li>
+        {% endif %}
     </ul>
-    <a href="{{ url_for('checkout') }}">Checkout</a>
     <a href="{{ url_for('home') }}">Continue Shopping</a>
+    <a href="{{ url_for('checkout') }}">Checkout</a>
 </body>
 </html>
