@@ -1,48 +1,29 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Cart</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
-    <nav class="navbar">
-        <div class="logo"><a href="{{ url_for('home') }}">ShopTech</a></div>
-        <ul class="nav-links">
-            <li><a href="{{ url_for('home') }}">Home</a></li>
-            <li><a href="{{ url_for('cart') }}">Cart</a></li>
+{% extends 'base.html' %}
+
+{% block content %}
+<main class="cart-container">
+    <h1>Your Shopping Cart</h1>
+    {% if cart_items %}
+        <ul class="cart-list">
+            {% for product, quantity in cart_items %}
+            <li class="cart-item">
+                <div class="item-info">
+                    <span class="product-name">{{ product.name }}</span>
+                    <span class="product-quantity">Quantity: {{ quantity }}</span>
+                </div>
+                <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="btn-remove">Remove</a>
+            </li>
+            {% endfor %}
         </ul>
-    </nav>
+    {% else %}
+        <p class="empty-cart">Your cart is currently empty.</p>
+    {% endif %}
 
-    <main class="cart-container">
-        <h1>Your Shopping Cart</h1>
+    <div class="cart-actions">
+        <a href="{{ url_for('home') }}" class="btn">Continue Shopping</a>
         {% if cart_items %}
-            <ul class="cart-list">
-                {% for product, quantity in cart_items %}
-                <li class="cart-item">
-                    <div class="item-info">
-                        <span class="product-name">{{ product.name }}</span>
-                        <span class="product-quantity">Quantity: {{ quantity }}</span>
-                    </div>
-                    <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="btn-remove">Remove</a>
-                </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p class="empty-cart">Your cart is currently empty.</p>
+            <a href="{{ url_for('checkout') }}" class="btn checkout-btn">Checkout</a>
         {% endif %}
-
-        <div class="cart-actions">
-            <a href="{{ url_for('home') }}" class="btn">Continue Shopping</a>
-            {% if cart_items %}
-                <a href="{{ url_for('checkout') }}" class="btn checkout-btn">Checkout</a>
-            {% endif %}
-        </div>
-    </main>
-
-    <footer>
-        <p>&copy; 2024 ShopTech. All Rights Reserved.</p>
-    </footer>
-</body>
-</html>
+    </div>
+</main>
+{% endblock %}
