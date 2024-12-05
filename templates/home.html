@@ -2,22 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <h1>Welcome to the Shopping Website</h1>
-    <h2>Products</h2>
-    <ul>
+    <nav class="navbar">
+        <div class="logo"><a href="{{ url_for('home') }}">ShopTech</a></div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('cart') }}">Cart</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero-section">
+        <h1>Welcome to the Shopping Website</h1>
+        <p>Explore the latest products and deals!</p>
+    </header>
+
+    <main class="products-container">
         {% for product in products %}
-            <li>
-                {{ product.name }} - Price: ${{ product.price }}
-                <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post" style="display:inline;">
-                    <input type="number" name="quantity" value="1" min="1" style="width: 50px;">
-                    <button type="submit">Add to Cart</button>
-                </form>
-            </li>
+        <div class="product-card">
+            <h2>{{ product.name }}</h2>
+            <p class="price">$ {{ product.price }}</p>
+            <a href="{{ url_for('product_page', product_id=product.id) }}" class="btn">View Details</a>
+        </div>
         {% endfor %}
-    </ul>
-    <a href="{{ url_for('cart') }}">View Cart</a>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 ShopTech. All Rights Reserved.</p>
+    </footer>
 </body>
 </html>

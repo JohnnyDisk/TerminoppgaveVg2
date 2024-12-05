@@ -1,12 +1,11 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Checkout</title>
-</head>
-<body>
+{% extends 'base.html' %}
+
+{% block title %}Checkout - ShopTech{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
     <h1>Checkout</h1>
-    <p>Thank you for your purchase!</p>
-    <a href="{{ url_for('home') }}">Return to Home</a>
-</body>
-</html>
+    <p class="thank-you-message">Thank you for your purchase! Your order is being processed.</p>
+    <a href="{{ url_for('home') }}" class="btn">Return to Home</a>
+</div>
+{% endblock %}
