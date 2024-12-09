@@ -3,7 +3,6 @@ import sqlite3
 import hashlib
 
 app = Flask(__name__)
-
 app.secret_key = 'your_secret_key'  # Set a secret key for session management
 
 # Database setup
@@ -128,47 +127,53 @@ def add_to_cart(product_id):
         else:
             session['guest_cart'][product_id] = quantity
         return redirect(url_for('home'))
-    user_id = session.get('user_id')
-    if user_id is None:
-        return redirect(url_for('login'))  # Redirect to login if user is not logged in
-    quantity = int(request.form.get('quantity', 1))  # Get quantity from form, default to 1
-    with sqlite3.connect('cart.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO cart (product_id, user_id, quantity)
-            VALUES (?, ?, ?)
-            ON CONFLICT(product_id, user_id) DO UPDATE SET quantity = quantity + excluded.quantity
-        ''', (product_id, user_id, quantity))
-        conn.commit()
+    else:
+        with sqlite3.connect('cart.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO cart (product_id, user_id, quantity)
+                VALUES (?, ?, ?)
+                ON CONFLICT(product_id, user_id) DO UPDATE SET quantity = quantity + excluded.quantity
+            ''', (product_id, user_id, quantity))
+            conn.commit()
     return redirect(url_for('home'))
 
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
     user_id = session.get('user_id')
     if user_id is None:
-        return redirect(url_for('login'))
-    with sqlite3.connect('cart.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM cart WHERE product_id = ? AND user_id = ?', (product_id, user_id))
-        conn.commit()
+        # Remove from guest cart
+        if 'guest_cart' in session and product_id in session['guest_cart']:
+            del session['guest_cart'][product_id]
+            return redirect(url_for('cart'))
+    else:
+        with sqlite3.connect('cart.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('DELETE FROM cart WHERE product_id = ? AND user_id = ?', (product_id, user_id))
+            conn.commit()
     return redirect(url_for('cart'))
 
 @app.route('/cart')
 def cart():
     user_id = session.get('user_id')
-    if user_id is None:
-        return redirect(url_for('login'))
-    
     cart_items = []
-    with sqlite3.connect('cart.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
-        items = cursor.fetchall()
-        for product in products:
-            product_id = product['id']
-            for item in items:
-                if item[0] == product_id:
-                    cart_items.append((product, item[1]))  # Append product and its quantity
+    if user_id is None:
+        # Retrieve items from guest cart
+        guest_cart = session.get('guest_cart', {})
+        for product_id, quantity in guest_cart.items():
+            product = next((p for p in products if p['id'] == product_id), None)
+            if product:
+                cart_items.append((product, quantity))
+    else:
+        with sqlite3.connect('cart.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
+            items = cursor.fetchall()
+            for product in products:
+                product_id = product['id']
+                for item in items:
+                    if item[0] == product_id:
+                        cart_items.append((product, item[1]))  # Append product and its quantity
     return render_template('cart.html', cart_items=cart_items)
 
 @app.route('/checkout')
