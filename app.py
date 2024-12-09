@@ -28,6 +28,12 @@ def init_db():
         ''')
         conn.commit()
 
+# Drop the existing cart table if it exists
+with sqlite3.connect('cart.db') as conn:
+    cursor = conn.cursor()
+    cursor.execute('DROP TABLE IF EXISTS cart')
+    conn.commit()
+
 # Call the database initialization function
 init_db()
 
@@ -43,13 +49,28 @@ def hash_password(password):
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if 'user_id' in session:
+        return redirect(url_for('home'))
     if request.method == 'POST':
         username = request.form['username']
-        password = hash_password(request.form['password'])
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
+
+        # Server-side validation
+        if len(username) < 3:
+            return "Username must be at least 3 characters long", 400
+        if len(password) < 7:
+            return "Password must be more than 6 characters long", 400
+        if password != confirm_password:
+            return "Passwords do not match", 400
+
+        # Hash password after validation
+        hashed_password = hash_password(password)
+        
         with sqlite3.connect('cart.db') as conn:
             cursor = conn.cursor()
             try:
-                cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, password))
+                cursor.execute('INSERT INTO users (username, password) VALUES (?, ?)', (username, hashed_password))
                 conn.commit()
                 return redirect(url_for('login'))
             except sqlite3.IntegrityError:
@@ -58,6 +79,8 @@ def signup():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if 'user_id' in session:
+        return redirect(url_for('home'))
     if request.method == 'POST':
         username = request.form['username']
         password = hash_password(request.form['password'])
@@ -93,31 +116,53 @@ def product_page(product_id):
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
+    user_id = session.get('user_id')
+    quantity = int(request.form.get('quantity', 1))  # Get quantity from form, default to 1
+
+    if user_id is None:
+        # Guest cart functionality
+        if 'guest_cart' not in session:
+            session['guest_cart'] = {}
+        if product_id in session['guest_cart']:
+            session['guest_cart'][product_id] += quantity
+        else:
+            session['guest_cart'][product_id] = quantity
+        return redirect(url_for('home'))
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect(url_for('login'))  # Redirect to login if user is not logged in
     quantity = int(request.form.get('quantity', 1))  # Get quantity from form, default to 1
     with sqlite3.connect('cart.db') as conn:
         cursor = conn.cursor()
         cursor.execute('''
-            INSERT INTO cart (product_id, quantity)
-            VALUES (?, ?)
-            ON CONFLICT(product_id) DO UPDATE SET quantity = quantity + excluded.quantity
-        ''', (product_id, quantity))
+            INSERT INTO cart (product_id, user_id, quantity)
+            VALUES (?, ?, ?)
+            ON CONFLICT(product_id, user_id) DO UPDATE SET quantity = quantity + excluded.quantity
+        ''', (product_id, user_id, quantity))
         conn.commit()
     return redirect(url_for('home'))
 
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect(url_for('login'))
     with sqlite3.connect('cart.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM cart WHERE product_id = ?', (product_id,))
+        cursor.execute('DELETE FROM cart WHERE product_id = ? AND user_id = ?', (product_id, user_id))
         conn.commit()
     return redirect(url_for('cart'))
 
 @app.route('/cart')
 def cart():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect(url_for('login'))
+    
     cart_items = []
     with sqlite3.connect('cart.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT product_id, quantity FROM cart')
+        cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
         items = cursor.fetchall()
         for product in products:
             product_id = product['id']
@@ -128,11 +173,15 @@ def cart():
 
 @app.route('/checkout')
 def checkout():
+    user_id = session.get('user_id')
+    if user_id is None:
+        return redirect(url_for('login'))
+    
     with sqlite3.connect('cart.db') as conn:
         cursor = conn.cursor()
-        cursor.execute('DELETE FROM cart')
+        cursor.execute('DELETE FROM cart WHERE user_id = ?', (user_id,))
         conn.commit()
     return render_template('checkout.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

@@ -323,10 +323,70 @@ footer {
     background: linear-gradient(135deg, #6a11cb, #2575fc);
 }
 
-.auth-form{
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 150px);
+    padding: 2em;
+}
+
+.auth-form {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     padding: 2em;
+    width: 100%;
+    max-width: 400px;
+}
 
+.auth-form h1 {
+    text-align: center;
+    margin-bottom: 1em;
+}
+
+.form-info {
+    text-align: center;
+    color: #666;
+    margin-bottom: 1.5em;
+    font-size: 0.9em;
+}
+
+.form-group {
+    margin-bottom: 1.5em;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5em;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.8em;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1em;
+}
+
+.error-message {
+    color: #ff4d4f;
+    margin-bottom: 1em;
+    text-align: center;
+}
+
+.auth-link {
+    text-align: center;
+    margin-top: 1.5em;
+    color: #666;
+}
+
+.auth-link a {
+    color: #2575fc;
+    text-decoration: none;
+}
+
+.auth-link a:hover {
+    text-decoration: underline;
 }
