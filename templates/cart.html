@@ -4,28 +4,29 @@
 <main class="cart-container">
     <h1>Your Shopping Cart</h1>
 
-    <!-- Sjekk at cart_items er definert og at den har innhold -->
     {% if cart_items is defined and cart_items %}
         <ul class="cart-list">
             {% for product, quantity in cart_items %}
             <li class="cart-item">
                 <div class="item-info">
-                    <!-- Sørg for at navn alltid er en streng -->
                     <span class="product-name">{{ product.name | string }}</span>
-                    <!-- Sørg for at quantity alltid er et heltall -->
                     <span class="product-quantity">Quantity: {{ quantity | int }}</span>
+                    <span class="product-price">Price: {{ "%.2f" % (product.price * quantity) }} $</span>
                 </div>
-                <!-- Sørg for at product.id alltid er et heltall -->
                 <a href="{{ url_for('remove_from_cart', product_id=product.id | int) }}" class="btn-remove">Remove</a>
             </li>
             {% endfor %}
         </ul>
+
+        <!-- Vis totalpris -->
+        <div class="total-price">
+            <strong>Total Price:</strong> {{ "%.2f" % total_price }} $
+        </div>
     {% else %}
         <p class="empty-cart">Your cart is currently empty.</p>
     {% endif %}
 
     <div class="cart-actions">
-        <!-- Legg til en betingelse for at knappen kun vises når det er varer i kurven -->
         <a href="{{ url_for('home') }}" class="btn">Continue Shopping</a>
         {% if cart_items is defined and cart_items %}
             <a href="{{ url_for('checkout') }}" class="btn checkout-btn">Checkout</a>

@@ -169,7 +169,7 @@ def add_to_cart(product_id):
         except sqlite3.Error as e:
             print(f"Databasefeil: {e}")  # Logg eventuelle databasefeil
         
-        return redirect(url_for('product_page', product_id=product_id))
+        return render_template('home.html', products=products, guest_cart=session['guest_cart'])
 
 @app.route('/remove_from_cart/<int:product_id>', methods=['GET', 'POST'])
 def remove_from_cart(product_id):
@@ -199,29 +199,39 @@ def remove_from_cart(product_id):
 def cart():
     user_id = session.get('user_id')
     cart_items = []
+    total_price = 0  # Initialiser totalpris
 
-    if user_id is None:
-        # Hent elementer fra gjestekurv
+    if user_id is None:  # Hent elementer fra gjestekurv
         guest_cart = session.get('guest_cart', {})
         print(f"Gjestekurv: {guest_cart}")  # Debug-linje for å sjekke innholdet i gjestekurven
-        
+
         for product_id_str, quantity in guest_cart.items():
             try:
                 product_id = int(product_id_str)  # Konverter produkt-ID til heltall
+                quantity = int(quantity)  # Sørg for at antallet er et heltall
             except ValueError:
-                print(f"Ugyldig product_id: {product_id_str}")  # Debug-linje
+                print(f"Ugyldig product_id eller quantity: {product_id_str}, {quantity}")  # Debug-linje
                 continue  # Hopp over hvis konvertering mislykkes
 
+            # Finn produktet i produktlisten
             product = next((p for p in products if p['id'] == product_id), None)
             if product:
-                cart_items.append((product, quantity))
-    else:
-        # Hent elementer fra brukerdatabasen
+                try:
+                    price = float(product['price'])  # Konverter prisen til float
+                    print(f"Produkt funnet: {product}, Antall: {quantity}, Pris: {price}")  # Debug-linje
+                    cart_items.append((product, quantity))
+                    total_price += price * quantity  # Oppdater totalpris
+                except (ValueError, TypeError) as e:
+                    print(f"Feil ved priskonvertering for produkt {product}: {e}")
+            else:
+                print(f"Produkt med ID {product_id} ikke funnet.")  # Debug-linje
+    else:  # Hent elementer fra brukerdatabasen
         try:
             with sqlite3.connect('cart.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
                 items = cursor.fetchall()
+
                 for item in items:
                     try:
                         product_id = int(item[0])  # Sørg for at product_id er et heltall
@@ -230,14 +240,25 @@ def cart():
                         print(f"Ugyldige data i databasen: {item}")  # Debug-linje
                         continue  # Hopp over hvis konvertering mislykkes
 
+                    # Finn produktet i produktlisten
                     product = next((p for p in products if p['id'] == product_id), None)
                     if product:
-                        cart_items.append((product, quantity))
+                        try:
+                            price = float(product['price'])  # Konverter prisen til float
+                            print(f"Produkt funnet i DB: {product}, Antall: {quantity}, Pris: {price}")  # Debug-linje
+                            cart_items.append((product, quantity))
+                            total_price += price * quantity  # Oppdater totalpris
+                        except (ValueError, TypeError) as e:
+                            print(f"Feil ved priskonvertering for produkt {product}: {e}")
+                    else:
+                        print(f"Produkt med ID {product_id} ikke funnet i DB.")  # Debug-linje
         except sqlite3.Error as e:
             print(f"Databasefeil: {e}")  # Logg eventuelle databasefeil
 
-    print(f"Handlekurv: {cart_items}")  # Debug-linje for å vise innholdet i handlekurven
-    return render_template('cart.html', cart_items=cart_items)
+    # Debugging for totalpris
+    print(f"Totalpris beregnet: {total_price}")
+    print(f"Handlekurv: {cart_items}, Totalpris: {total_price}")  # Debug-linje for å vise innholdet i handlekurven og totalpris
+    return render_template('cart.html', cart_items=cart_items, total_price=total_price)
 
 
 
