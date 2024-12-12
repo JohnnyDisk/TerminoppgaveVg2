@@ -3,15 +3,20 @@
 {% block content %}
 <main class="cart-container">
     <h1>Your Shopping Cart</h1>
-    {% if cart_items %}
+
+    <!-- Sjekk at cart_items er definert og at den har innhold -->
+    {% if cart_items is defined and cart_items %}
         <ul class="cart-list">
             {% for product, quantity in cart_items %}
             <li class="cart-item">
                 <div class="item-info">
-                    <span class="product-name">{{ product.name }}</span>
-                    <span class="product-quantity">Quantity: {{ quantity }}</span>
+                    <!-- Sørg for at navn alltid er en streng -->
+                    <span class="product-name">{{ product.name | string }}</span>
+                    <!-- Sørg for at quantity alltid er et heltall -->
+                    <span class="product-quantity">Quantity: {{ quantity | int }}</span>
                 </div>
-                <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="btn-remove">Remove</a>
+                <!-- Sørg for at product.id alltid er et heltall -->
+                <a href="{{ url_for('remove_from_cart', product_id=product.id | int) }}" class="btn-remove">Remove</a>
             </li>
             {% endfor %}
         </ul>
@@ -20,8 +25,9 @@
     {% endif %}
 
     <div class="cart-actions">
+        <!-- Legg til en betingelse for at knappen kun vises når det er varer i kurven -->
         <a href="{{ url_for('home') }}" class="btn">Continue Shopping</a>
-        {% if cart_items %}
+        {% if cart_items is defined and cart_items %}
             <a href="{{ url_for('checkout') }}" class="btn checkout-btn">Checkout</a>
         {% endif %}
     </div>

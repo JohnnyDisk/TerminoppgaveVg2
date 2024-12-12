@@ -1,9 +1,11 @@
 from flask import Flask, session, render_template, request, redirect, url_for
 import sqlite3
 import hashlib
+from datetime import timedelta
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Set a secret key for session management
+app.permanent_session_lifetime = timedelta(days=7)  # Hold handlekurven i 7 dager
 
 # Database setup
 def init_db():
@@ -101,7 +103,10 @@ def logout():
 
 @app.route('/')
 def home():
-    return render_template('home.html', products=products)
+    session.permanent = True  # Gjestens sesjon vil leve i 7 dager
+    if 'guest_cart' not in session:
+        session['guest_cart'] = {}
+    return render_template('home.html', products=products, guest_cart=session['guest_cart'])
 
 @app.route('/product/<int:product_id>')
 def product_page(product_id):
@@ -115,66 +120,111 @@ def product_page(product_id):
 
 @app.route('/add_to_cart/<int:product_id>', methods=['POST'])
 def add_to_cart(product_id):
-    user_id = session.get('user_id')
-    quantity = int(request.form.get('quantity', 1))  # Get quantity from form, default to 1
+    try:
+        # Hent antall fra form, standard er 1, og sørg for at det er et heltall
+        quantity = request.form.get('quantity', '1')  # Standard er '1' som streng
+        quantity = int(quantity)  # Konverter til heltall
+        if quantity < 1:  # Unngå negative tall og null
+            quantity = 1
+    except (ValueError, TypeError) as e:
+        print(f"Feil med quantity: {e}")  # Debug-linje for å vise hva som gikk galt
+        quantity = 1  # Hvis konverteringen mislykkes, sett den til 1
 
-    if user_id is None:
-        # Guest cart functionality
+    user_id = session.get('user_id')  # Hent bruker-ID fra sesjonen
+    
+    if user_id is None:  # Brukeren er gjest
+        # Initialiser gjestehandlekurv hvis den ikke eksisterer
         if 'guest_cart' not in session:
             session['guest_cart'] = {}
-        if product_id in session['guest_cart']:
-            session['guest_cart'][product_id] += quantity
+
+        product_id_str = str(product_id)  # Konverter produkt-ID til streng for å lagre i sesjonen
+        
+        # Legg til produkt i gjestehandlekurven
+        if product_id_str in session['guest_cart']:
+            session['guest_cart'][product_id_str] += quantity
         else:
-            session['guest_cart'][product_id] = quantity
-        return redirect(url_for('home'))
+            session['guest_cart'][product_id_str] = quantity
+        
+        session.modified = True  # Sørg for at endringer blir lagret i sesjonen
+        print(f"Gjestekurv etter å ha lagt til: {session['guest_cart']}")  # Debug-linje for å vise handlekurven
+        
+        return redirect(url_for('product_page', product_id=product_id))  # Tilbake til produktsiden
     else:
-        with sqlite3.connect('cart.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO cart (product_id, user_id, quantity)
-                VALUES (?, ?, ?)
-                ON CONFLICT(product_id, user_id) DO UPDATE SET quantity = quantity + excluded.quantity
-            ''', (product_id, user_id, quantity))
-            conn.commit()
-    return redirect(url_for('home'))
+        # Bruker er innlogget, legg til i databasen
+        try:
+            with sqlite3.connect('cart.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                    INSERT INTO cart (product_id, user_id, quantity)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(product_id, user_id) DO UPDATE SET quantity = quantity + excluded.quantity
+                ''', (product_id, user_id, quantity))
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"Databasefeil: {e}")  # Logg eventuelle databasefeil
+        
+        return redirect(url_for('product_page', product_id=product_id))
 
 @app.route('/remove_from_cart/<int:product_id>')
 def remove_from_cart(product_id):
     user_id = session.get('user_id')
-    if user_id is None:
-        # Remove from guest cart
+    if user_id is None:  # Brukeren er gjest
         if 'guest_cart' in session and product_id in session['guest_cart']:
             del session['guest_cart'][product_id]
-            return redirect(url_for('cart'))
-    else:
+            session.modified = True  # Sørg for at endringer blir lagret i session
+    else:  # Bruker er innlogget
         with sqlite3.connect('cart.db') as conn:
             cursor = conn.cursor()
             cursor.execute('DELETE FROM cart WHERE product_id = ? AND user_id = ?', (product_id, user_id))
             conn.commit()
     return redirect(url_for('cart'))
 
+
 @app.route('/cart')
 def cart():
     user_id = session.get('user_id')
     cart_items = []
+
     if user_id is None:
-        # Retrieve items from guest cart
+        # Hent elementer fra gjestekurv
         guest_cart = session.get('guest_cart', {})
-        for product_id, quantity in guest_cart.items():
+        print(f"Gjestekurv: {guest_cart}")  # Debug-linje for å sjekke innholdet i gjestekurven
+        
+        for product_id_str, quantity in guest_cart.items():
+            try:
+                product_id = int(product_id_str)  # Konverter produkt-ID til heltall
+            except ValueError:
+                print(f"Ugyldig product_id: {product_id_str}")  # Debug-linje
+                continue  # Hopp over hvis konvertering mislykkes
+
             product = next((p for p in products if p['id'] == product_id), None)
             if product:
                 cart_items.append((product, quantity))
     else:
-        with sqlite3.connect('cart.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
-            items = cursor.fetchall()
-            for product in products:
-                product_id = product['id']
+        # Hent elementer fra brukerdatabasen
+        try:
+            with sqlite3.connect('cart.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
+                items = cursor.fetchall()
                 for item in items:
-                    if item[0] == product_id:
-                        cart_items.append((product, item[1]))  # Append product and its quantity
+                    try:
+                        product_id = int(item[0])  # Sørg for at product_id er et heltall
+                        quantity = int(item[1])  # Sørg for at quantity er et heltall
+                    except ValueError:
+                        print(f"Ugyldige data i databasen: {item}")  # Debug-linje
+                        continue  # Hopp over hvis konvertering mislykkes
+
+                    product = next((p for p in products if p['id'] == product_id), None)
+                    if product:
+                        cart_items.append((product, quantity))
+        except sqlite3.Error as e:
+            print(f"Databasefeil: {e}")  # Logg eventuelle databasefeil
+
+    print(f"Handlekurv: {cart_items}")  # Debug-linje for å vise innholdet i handlekurven
     return render_template('cart.html', cart_items=cart_items)
+
+
 
 @app.route('/checkout')
 def checkout():

@@ -27,7 +27,7 @@
             <img src="{{ product.image }}" alt="{{ product.name }}" class="product-image">
             <h1>{{ product.name }}</h1>
             <p class="price">$ {{ product.price }}</p>
-            <form action="{{ url_for('add_to_cart', product_id=product.id) }}" method="post" class="add-to-cart-form">
+            <form action="{{ url_for('add_to_cart', product_id=product['id']) }}" method="POST" class="add-to-cart-form">
                 <label for="quantity">Quantity:</label>
                 <input type="number" name="quantity" id="quantity" value="1" min="1" class="quantity-input">
                 <button type="submit" class="btn">Add to Cart</button>
