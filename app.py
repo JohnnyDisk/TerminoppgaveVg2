@@ -40,10 +40,16 @@ init_db()
 
 # Sample product data
 products = [
-    {'id': 1, 'name': 'Sko', 'price': 10.00},
-    {'id': 2, 'name': 'Jakke', 'price': 15.00},
-    {'id': 3, 'name': 'Lue', 'price': 20.00},
+    {'id': 1, 'name': 'Laptop', 'price': 999.99},
+    {'id': 2, 'name': 'Smartphone', 'price': 799.99},
+    {'id': 3, 'name': 'Wireless Earbuds', 'price': 129.99},
+    {'id': 4, 'name': 'Gaming Mouse', 'price': 59.99},
+    {'id': 5, 'name': 'Mechanical Keyboard', 'price': 119.99},
+    {'id': 6, 'name': '4K Monitor', 'price': 349.99},
+    {'id': 7, 'name': 'External Hard Drive', 'price': 89.99},
+    {'id': 8, 'name': 'Portable Charger', 'price': 29.99},
 ]
+
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -148,7 +154,7 @@ def add_to_cart(product_id):
         session.modified = True  # Sørg for at endringer blir lagret i sesjonen
         print(f"Gjestekurv etter å ha lagt til: {session['guest_cart']}")  # Debug-linje for å vise handlekurven
         
-        return redirect(url_for('product_page', product_id=product_id))  # Tilbake til produktsiden
+        return render_template('home.html', products=products, guest_cart=session['guest_cart'])  # Tilbake til produktsiden
     else:
         # Bruker er innlogget, legg til i databasen
         try:
@@ -165,18 +171,27 @@ def add_to_cart(product_id):
         
         return redirect(url_for('product_page', product_id=product_id))
 
-@app.route('/remove_from_cart/<int:product_id>')
+@app.route('/remove_from_cart/<int:product_id>', methods=['GET', 'POST'])
 def remove_from_cart(product_id):
     user_id = session.get('user_id')
-    if user_id is None:  # Brukeren er gjest
-        if 'guest_cart' in session and product_id in session['guest_cart']:
-            del session['guest_cart'][product_id]
-            session.modified = True  # Sørg for at endringer blir lagret i session
+    
+    if user_id is None:  # Bruker er en gjest
+        guest_cart = session.get('guest_cart', {})
+        product_id_str = str(product_id)  # Konverter produkt-ID til streng for å matche nøkler i gjestekurven
+        if product_id_str in guest_cart:
+            del guest_cart[product_id_str]  # Fjern produktet fra gjestekurven
+            session['guest_cart'] = guest_cart  # Oppdater sesjonen
+            session.modified = True  # Sørg for at endringene lagres
+            print(f"Oppdatert gjestekurv etter fjerning: {guest_cart}")  # Debug-linje for å sjekke oppdatert handlekurv
     else:  # Bruker er innlogget
-        with sqlite3.connect('cart.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute('DELETE FROM cart WHERE product_id = ? AND user_id = ?', (product_id, user_id))
-            conn.commit()
+        try:
+            with sqlite3.connect('cart.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('DELETE FROM cart WHERE product_id = ? AND user_id = ?', (product_id, user_id))
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"Databasefeil: {e}")  # Logg eventuelle databasefeil
+    
     return redirect(url_for('cart'))
 
 
@@ -226,17 +241,46 @@ def cart():
 
 
 
-@app.route('/checkout')
+@app.route('/checkout', methods=['GET', 'POST'])
 def checkout():
     user_id = session.get('user_id')
-    if user_id is None:
-        return redirect(url_for('login'))
+    cart_items = []
+    total_price = 0
+
+    if user_id is None:  # Bruker er en gjest
+        guest_cart = session.pop('guest_cart', {})  # Fjern og hent gjestekurven fra sesjonen
+        for product_id_str, quantity in guest_cart.items():
+            try:
+                product_id = int(product_id_str)  # Konverter produkt-ID til heltall
+            except ValueError:
+                continue  # Hopp over hvis konvertering mislykkes
+            product = next((p for p in products if p['id'] == product_id), None)
+            if product:
+                total_price += product['price'] * quantity
+                cart_items.append((product, quantity))
+        session.modified = True  # Sørg for at endringene lagres
+        print("Gjestekurv er slettet etter utsjekking.")  # Debug-linje
+    else:  # Bruker er innlogget
+        try:
+            with sqlite3.connect('cart.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute('SELECT product_id, quantity FROM cart WHERE user_id = ?', (user_id,))
+                items = cursor.fetchall()
+                for item in items:
+                    product_id = int(item[0])
+                    quantity = int(item[1])
+                    product = next((p for p in products if p['id'] == product_id), None)
+                    if product:
+                        total_price += product['price'] * quantity
+                        cart_items.append((product, quantity))
+                cursor.execute('DELETE FROM cart WHERE user_id = ?', (user_id,))
+                conn.commit()
+        except sqlite3.Error as e:
+            print(f"Databasefeil: {e}")  # Logg eventuelle databasefeil
     
-    with sqlite3.connect('cart.db') as conn:
-        cursor = conn.cursor()
-        cursor.execute('DELETE FROM cart WHERE user_id = ?', (user_id,))
-        conn.commit()
-    return render_template('checkout.html')
+    return render_template('checkout.html', cart_items=cart_items, total_price=total_price)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
