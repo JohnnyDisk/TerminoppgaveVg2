@@ -285,7 +285,7 @@ CREATE TABLE cart (
 - Legg til produkter med spesifikt antall
 - Fjern produkter fra handlekurven
 - Se sanntids handlekurvtotal
-- Handlekurven bevares i 7 dager
+- Gjest handlekurven bevares i 7 dager
 
 ## Utviklingsnotater
 
