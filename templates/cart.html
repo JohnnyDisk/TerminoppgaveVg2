@@ -3,25 +3,32 @@
 {% block content %}
 <main class="cart-container">
     <h1>Your Shopping Cart</h1>
-    {% if cart_items %}
+
+    {% if cart_items is defined and cart_items %}
         <ul class="cart-list">
             {% for product, quantity in cart_items %}
             <li class="cart-item">
                 <div class="item-info">
-                    <span class="product-name">{{ product.name }}</span>
-                    <span class="product-quantity">Quantity: {{ quantity }}</span>
+                    <span class="product-name">{{ product.name | string }}</span>
+                    <span class="product-quantity">Quantity: {{ quantity | int }}</span>
+                    <span class="product-price">Price: {{ "%.2f" % (product.price * quantity) }} $</span>
                 </div>
-                <a href="{{ url_for('remove_from_cart', product_id=product.id) }}" class="btn-remove">Remove</a>
+                <a href="{{ url_for('remove_from_cart', product_id=product.id | int) }}" class="btn-remove">Remove</a>
             </li>
             {% endfor %}
         </ul>
+
+        <!-- Vis totalpris -->
+        <div class="total-price">
+            <strong>Total Price:</strong> {{ "%.2f" % total_price }} $
+        </div>
     {% else %}
         <p class="empty-cart">Your cart is currently empty.</p>
     {% endif %}
 
     <div class="cart-actions">
         <a href="{{ url_for('home') }}" class="btn">Continue Shopping</a>
-        {% if cart_items %}
+        {% if cart_items is defined and cart_items %}
             <a href="{{ url_for('checkout') }}" class="btn checkout-btn">Checkout</a>
         {% endif %}
     </div>

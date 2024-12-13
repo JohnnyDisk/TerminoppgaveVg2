@@ -117,6 +117,10 @@ a {
 
 /* Footer */
 footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     text-align: center;
     background-color: #333;
     color: white;
@@ -297,10 +301,15 @@ footer {
     text-align: center;
 }
 
+header {
+    text-align: center;
+    margin-bottom: 2em;
+}
+
 .checkout-container h1 {
-    font-size: 2em;
-    margin-bottom: 1em;
-    color: #333;
+    font-size: 1.8em;
+    color: #222;
+    margin-bottom: 1.5em;
 }
 
 .thank-you-message {
@@ -309,14 +318,48 @@ footer {
     margin-bottom: 2em;
 }
 
-.checkout-container .btn {
-    background: linear-gradient(135deg, #2575fc, #6a11cb);
-    color: white;
-    padding: 0.8em 1.5em;
-    text-decoration: none;
-    border-radius: 4px;
+.receipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.5em;
+}
+
+.receipt-table th, .receipt-table td {
+    text-align: left;
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    font-size: 0.9em;
+}
+
+.receipt-table th {
+    background-color: #f8f9fa;
     font-weight: bold;
-    transition: background 0.3s;
+}
+
+.receipt-table td {
+    color: #555;
+}
+
+.total-amount {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-top: 1em;
+    color: #333;
+}
+
+.checkout-container .btn {
+    display: inline-block;
+    margin-top: 1.5em;
+    padding: 10px 20px;
+    font-size: 1em;
+    color: #fff;
+    background: linear-gradient(45deg, #007bff, #6610f2);
+    border: none;
+    border-radius: 8px;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: background 0.3s ease, box-shadow 0.3s ease;
 }
 
 .checkout-container .btn:hover {
@@ -363,7 +406,7 @@ footer {
 }
 
 .form-group input {
-    width: 100%;
+    width: 90%;
     padding: 0.8em;
     border: 1px solid #ddd;
     border-radius: 4px;

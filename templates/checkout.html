@@ -1,11 +1,48 @@
 {% extends 'base.html' %}
 
-{% block title %}Checkout - ShopTech{% endblock %}
-
 {% block content %}
-<div class="checkout-container">
-    <h1>Checkout</h1>
-    <p class="thank-you-message">Thank you for your purchase! Your order is being processed.</p>
-    <a href="{{ url_for('home') }}" class="btn">Return to Home</a>
-</div>
+    <header>
+        <h1>Thank You for Your Purchase!</h1>
+    </header>
+    
+    <main class="checkout-container">
+        <section class="receipt">
+            <h2>Your Receipt</h2>
+            
+            {% if cart_items %}
+                <table class="receipt-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product, quantity in cart_items %}
+                        <tr>
+                            <td>{{ product.name }}</td>
+                            <td>{{ quantity }}</td>
+                            <td>{{ "%.2f" % product.price }} $</td>
+                            <td>{{ "%.2f" % (product.price * quantity) }} $</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <div class="total-amount">
+                    <strong>Total Amount:</strong> <span>{{ "%.2f" % total_price }} $</span>
+                </div>
+            {% else %}
+                <p>Your cart was empty, but we still appreciate your visit!</p>
+            {% endif %}
+        </section>
+        
+        <section class="checkout-message">
+            <p>Thank you for shopping with us! We hope to see you again soon.</p>
+        </section>
+
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Continue Shopping</a>
+    </main>
 {% endblock %}
