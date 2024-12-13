@@ -1,71 +1,71 @@
-    # E-Commerce Web Application
+# Nettbutikk Webapplikasjon
 
-A full-featured e-commerce web application built with Flask, featuring user authentication, product catalog, shopping cart functionality, and checkout system. The application supports both guest and authenticated user shopping experiences.
+En fullstendig nettbutikkløsning bygget med Flask, med funksjoner for brukerautentisering, produktkatalog, handlekurv og betalingssystem. Applikasjonen støtter både gjestekjøp og innloggede brukere.
 
-## Features
+## Funksjoner
 
-### User Authentication
-- Secure user registration and login system
-- Password hashing using SHA-256
-- Session management with 7-day persistence
-- Guest shopping capability
+### Brukerautentisering
+- Sikker brukerregistrering og innloggingssystem
+- Passordhashing med SHA-256
+- Øktadministrasjon med 7-dagers varighet
+- Mulighet for gjestekjøp
 
-### Product Management
-- Dynamic product catalog
-- Detailed product pages with images
-- Product information including name and price
-- Product image integration
+### Produkthåndtering
+- Dynamisk produktkatalog
+- Detaljerte produktsider med bilder
+- Produktinformasjon inkludert navn og pris
+- Produktbildeintegrasjon
 
-### Shopping Cart
-- Add/remove products functionality
-- Quantity management
-- Persistent cart for both guests and authenticated users
-- Real-time cart total calculation
-- Database-backed cart for authenticated users
-- Session-based cart for guest users
+### Handlekurv
+- Legg til/fjern produkter
+- Mengdehåndtering
+- Vedvarende handlekurv for både gjester og innloggede brukere
+- Sanntids totalberegning
+- Databasebasert handlekurv for innloggede brukere
+- Øktbasert handlekurv for gjester
 
-### Checkout System
-- Secure checkout process
-- Order summary
-- Cart clearing after successful checkout
-- Total price calculation
+### Betalingssystem
+- Sikker utsjekkingsprosess
+- Ordresammendrag
+- Tømming av handlekurv etter vellykket kjøp
+- Beregning av totalpris
 
-## Technical Stack
+## Teknisk Stack
 
 - **Backend**: Python Flask
 - **Database**: SQLite3
 - **Frontend**: HTML, CSS
-- **Session Management**: Flask Session
-- **Security**: SHA-256 password hashing
+- **Øktadministrasjon**: Flask Session
+- **Sikkerhet**: SHA-256 passordhashing
 
-## Project Structure
+## Prosjektstruktur
 
 ```
 TerminoppgaveVg2/
 │
-├── app.py                 # Main Flask application
-├── cart.db               # SQLite database
+├── app.py                 # Hoved Flask-applikasjon
+├── cart.db               # SQLite-database
 │
-├── static/               # Static files
-│   ├── styles.css        # CSS styles
-│   └── images/           # Product images
-│       └── product_*.jpg # Product images
+├── static/               # Statiske filer
+│   ├── styles.css        # CSS-stiler
+│   └── images/           # Produktbilder
+│       └── product_*.jpg # Produktbilder
 │
-├── templates/            # HTML templates
-│   ├── base.html         # Base template
-│   ├── home.html         # Homepage
-│   ├── login.html        # Login page
-│   ├── signup.html       # Registration page
-│   ├── product.html      # Product details
-│   ├── cart.html         # Shopping cart
-│   └── checkout.html     # Checkout page
+├── templates/            # HTML-maler
+│   ├── base.html         # Basemalen
+│   ├── home.html         # Hjemmeside
+│   ├── login.html        # Innloggingsside
+│   ├── signup.html       # Registreringsside
+│   ├── product.html      # Produktdetaljer
+│   ├── cart.html         # Handlekurv
+│   └── checkout.html     # Utsjekkingsside
 │
-└── README.md             # Project documentation
+└── README.md             # Prosjektdokumentasjon
 ```
 
-## Database Schema
+## Databaseskjema
 
-### Users Table
+### Brukertabell
 ```sql
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,7 +74,7 @@ CREATE TABLE users (
 )
 ```
 
-### Cart Table
+### Handlekurvtabell
 ```sql
 CREATE TABLE cart (
     product_id INTEGER,
@@ -85,51 +85,51 @@ CREATE TABLE cart (
 )
 ```
 
-## Setup and Installation
+## Oppsett og Installasjon
 
-1. Ensure Python is installed on your system
-2. Clone the repository
-3. Install required dependencies:
+1. Sørg for at Python er installert på systemet ditt
+2. Klon prosjektet
+3. Installer nødvendige avhengigheter:
    ```bash
    pip install flask
    ```
-4. Run the application:
+4. Kjør applikasjonen:
    ```bash
    python app.py
    ```
-5. Access the application at `http://localhost:5000`
+5. Åpne applikasjonen i nettleseren på `http://localhost:5000`
 
-## Security Features
+## Sikkerhetsfunksjoner
 
-- Password hashing using SHA-256
-- Session-based authentication
-- SQL injection prevention using parameterized queries
-- CSRF protection through Flask's session management
-- Input validation for user registration
+- Passordhashing med SHA-256
+- Øktbasert autentisering
+- Beskyttelse mot SQL-injeksjon ved bruk av parametriserte spørringer
+- CSRF-beskyttelse gjennom Flask sin øktadministrasjon
+- Inputvalidering for brukerregistrering
 
-## User Guide
+## Brukerveiledning
 
-### Registration
-- Username must be at least 3 characters long
-- Password must be more than 6 characters long
-- Passwords must match during confirmation
+### Registrering
+- Brukernavn må være minst 3 tegn langt
+- Passord må være mer enn 6 tegn langt
+- Passordene må stemme overens ved bekreftelse
 
-### Shopping
-1. Browse products on the homepage
-2. Click on products to view details
-3. Add products to cart with desired quantity
-4. Review cart contents
-5. Proceed to checkout
+### Handling
+1. Bla gjennom produkter på hjemmesiden
+2. Klikk på produkter for å se detaljer
+3. Legg produkter i handlekurven med ønsket antall
+4. Se gjennom handlekurvens innhold
+5. Gå videre til utsjekking
 
-### Cart Management
-- Add products with specific quantities
-- Remove products from cart
-- View real-time cart total
-- Cart persists for 7 days
+### Handlekurvadministrasjon
+- Legg til produkter med spesifikt antall
+- Fjern produkter fra handlekurven
+- Se sanntids handlekurvtotal
+- Handlekurven bevares i 7 dager
 
-## Development Notes
+## Utviklingsnotater
 
-- Debug mode is enabled in development
-- Server runs on host '0.0.0.0' and port 5000
-- Guest cart data is stored in session
-- Authenticated user cart data is stored in SQLite database
+- Feilsøkingsmodus er aktivert i utvikling
+- Serveren kjører på vert '0.0.0.0' og port 5000
+- Gjestehandlekurvdata lagres i økten
+- Innloggede brukeres handlekurvdata lagres i SQLite-databasen
