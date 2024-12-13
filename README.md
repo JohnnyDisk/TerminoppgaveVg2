@@ -1,6 +1,6 @@
 # Nettbutikk Webapplikasjon
 
-En fullstendig nettbutikkløsning bygget med Flask, med funksjoner for brukerautentisering, produktkatalog, handlekurv og betalingssystem. Applikasjonen støtter både gjestekjøp og innloggede brukere.
+En fullstendig nettbutikkløsning bygget med Flask, med funksjoner for brukerautentisering, produktkatalog, handlekurv og utsjekkingssystem. Applikasjonen støtter både gjestekjøp og innloggede brukere.
 
 ## Funksjoner
 
@@ -24,7 +24,7 @@ En fullstendig nettbutikkløsning bygget med Flask, med funksjoner for brukeraut
 - Databasebasert handlekurv for innloggede brukere
 - Øktbasert handlekurv for gjester
 
-### Betalingssystem
+### utsjekkingssystem
 - Sikker utsjekkingsprosess
 - Ordresammendrag
 - Tømming av handlekurv etter vellykket kjøp
